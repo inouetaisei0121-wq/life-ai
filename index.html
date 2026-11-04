@@ -110,4 +110,16 @@ payList.innerHTML=data.payments.map((x,i)=>`<div class="item"><span>${x.name}<br
 challengeList.innerHTML=["今週はコンビニを控える","外食を1回減らす","使っていないサブスクを見直す"].map((x,i)=>`<label class="item"><span>${x}</span><input type="checkbox" style="width:auto" ${data.challenges[i]?"checked":""} onchange="data.challenges[${i}]=this.checked;save()"></label>`).join("");  renderReport();
 }
 sb.auth.getSession().then(({data:d})=>{if(d.session){user=d.session.user;loadData()}});
-</script></body></html>
+</script>
+<section id="premium-plan" style="margin:20px;padding:20px;border-radius:20px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:white;text-align:center;">
+  <h2>✨ LIFE AI プレミアム</h2>
+  <p>もっと賢く、もっと楽しくお金を管理しよう！</p>
+  <h1>月額300円</h1>
+  <p>・AI節約アドバイス強化</p>
+  <p>・年間収支分析</p>
+  <p>・貯金目標の管理</p>
+  <button onclick="alert('プレミアムプランは準備中です！')" style="padding:14px 25px;border:0;border-radius:30px;background:white;color:#8b5cf6;font-weight:bold;">
+    プレミアムを始める
+  </button>
+</section>
+</body></html>
