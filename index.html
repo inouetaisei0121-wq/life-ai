@@ -113,6 +113,60 @@ sb.auth.getSession().then(({data:d})=>{if(d.session){user=d.session.user;loadDat
 </script>
 <section id="premium-plan" style="margin:20px;padding:20px;border-radius:20px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:white;text-align:center;">
   <h2>✨ LIFE AI プレミアム</h2>
+ <section id="annual-analysis" style="margin:20px;padding:20px;border-radius:20px;background:#fff;color:#333;box-shadow:0 4px 15px #ddd;">
+  <h2>📊 年間支出分析</h2>
+  <p>今年のお金の使い方をチェックしよう！</p>
+  <div id="annual-total">年間支出：集計中...</div>
+  <div id="annual-average">月平均：集計中...</div>
+  <h3>月ごとの支出</h3>
+  <div id="annual-months"></div>
+  <h3>カテゴリ別ランキング</h3>
+  <div id="annual-categories"></div>
+</section>
+ <script>
+function updateAnnualAnalysis() {
+  const expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+
+  const year = new Date().getFullYear();
+  const monthly = Array(12).fill(0);
+  const categories = {};
+
+  expenses.forEach(item => {
+    if (!item.date || !item.amount) return;
+
+    const date = new Date(item.date);
+    if (date.getFullYear() !== year) return;
+
+    const amount = Number(item.amount);
+    monthly[date.getMonth()] += amount;
+
+    const category = item.cat || "その他";
+    categories[category] = (categories[category] || 0) + amount;
+  });
+
+  const total = monthly.reduce((a, b) => a + b, 0);
+
+  document.getElementById("annual-total").textContent =
+    "年間支出：" + total.toLocaleString() + "円";
+
+  document.getElementById("annual-average").textContent =
+    "月平均：" + Math.round(total / 12).toLocaleString() + "円";
+
+  document.getElementById("annual-months").innerHTML =
+    monthly.map((amount, i) =>
+      `<p>${i + 1}月：${amount.toLocaleString()}円</p>`
+    ).join("");
+
+  document.getElementById("annual-categories").innerHTML =
+    Object.entries(categories)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, amount]) =>
+        `<p>${name}：${amount.toLocaleString()}円</p>`
+      ).join("");
+}
+
+document.addEventListener("DOMContentLoaded", updateAnnualAnalysis);
+</script>
   <p>もっと賢く、もっと楽しくお金を管理しよう！</p>
   <h1>月額300円</h1>
   <p>・AI節約アドバイス強化</p>
@@ -122,4 +176,5 @@ sb.auth.getSession().then(({data:d})=>{if(d.session){user=d.session.user;loadDat
     プレミアムを始める
   </button>
 </section>
+
 </body></html>
