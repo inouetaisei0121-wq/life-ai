@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#7057e8"><link rel="manifest" href="manifest.webmanifest">
+<title>LIFE AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--p:#7057e8;--bg:#f6f5ff;--ink:#25233a;--muted:#77758a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif}
+header{background:linear-gradient(120deg,#7057e8,#a36bea);color:white;padding:24px 18px 28px;border-radius:0 0 25px 25px}
+header h1{margin:0;font-size:27px}header p{margin:6px 0 0;opacity:.9}
+main{max-width:760px;margin:auto;padding:16px}.card{background:white;border-radius:18px;padding:17px;margin:12px 0;box-shadow:0 4px 18px #28204a0c}
+h2{font-size:18px;margin:0 0 12px}.tabs{display:flex;gap:8px;overflow:auto;margin:12px 0}.tabs button{white-space:nowrap;border:0;border-radius:20px;padding:10px 14px;background:#e9e5ff;color:#5141a9}
+.tabs button.active,button.primary{background:var(--p);color:white}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ddd9ed;border-radius:11px;font-size:16px;margin:5px 0 10px;background:white}
+button{border:0;border-radius:11px;padding:12px 15px;font-size:15px;background:#eeeafc;color:#45388f}
+button.primary{font-weight:700}.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+.big{font-size:27px;font-weight:800}.muted{color:var(--muted);font-size:13px}.hidden{display:none!important}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.pill{font-size:12px;background:#f0edff;padding:4px 8px;border-radius:20px}
+.bar{height:9px;background:#eee;border-radius:10px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#7057e8,#f18cc6)}
+.notice{padding:10px;background:#fff7df;border-radius:10px;font-size:13px}
+</style></head>
+<body>
+<header><h1>🌈 LIFE AI</h1><p>お金の流れを見える化して、楽しく節約。</p></header>
+<main>
+<section id="auth" class="card">
+<h2>ログイン / 新規登録</h2><p class="muted">メールアドレスとパスワードでデータを保存します。</p>
+<input id="email" type="email" placeholder="メールアドレス"><input id="password" type="password" placeholder="パスワード（6文字以上）">
+<div class="row"><button class="primary" onclick="signIn()">ログイン</button><button onclick="signUp()">新規登録</button></div><p id="authMsg" class="muted"></p>
+</section>
+<section id="app" class="hidden">
+<div class="card"><div class="muted">今月の支出</div><div class="big" id="total">¥0</div><div class="muted" id="budgetText">予算未設定</div><div class="bar"><span id="budgetBar" style="width:0%"></span></div></div>
+<nav class="tabs">
+<button class="active" onclick="showTab('home',this)">ホーム</button><button onclick="showTab('report',this)">月間レポート</button><button onclick="showTab('expenses',this)">支出入力</button><button onclick="showTab('goals',this)">貯金目標</button><button onclick="showTab('subs',this)">サブスク</button><button onclick="showTab('challenges',this)">節約チャレンジ</button><button onclick="showTab('payments',this)">支払予定</button><button onclick="showTab('settings',this)">設定</button>
+</nav>
+<div id="report" class="tab hidden">
+<div class="card"><h2>📊 月間レポート</h2><p class="muted">見たい月を選ぶと、その月の支出を集計するよ。</p><input id="reportMonth" type="month" onchange="renderReport()"></div>
+<div class="card"><div class="muted">選択した月の支出合計</div><div class="big" id="reportTotal">¥0</div><div class="muted" id="reportCount">0件の支出</div></div>
+<div class="card"><h2>前月との比較</h2><div class="big" id="reportDiff">—</div><p class="muted" id="reportDiffText">前月のデータと比較するよ。</p></div>
+<div class="card"><h2>カテゴリ別の内訳</h2><div id="reportCategories" class="muted">まだ支出がないよ。</div></div>
+<div class="card"><h2>直近6か月の支出推移</h2><div id="reportTrend" class="muted">データを集計中...</div></div>
+</div>
+<div id="home" class="tab">
+<div class="card"><h2>今月のカテゴリ別支出</h2><div id="categories"></div></div>
+<div class="card"><h2>節約アドバイス</h2><p id="advice">支出を記録すると、節約のヒントが表示されます。</p><p class="muted">※記録内容から自動で提案する簡易アドバイスです。</p></div>
+<div class="card"><h2>最近の支出</h2><div id="recent"></div></div>
+</div>
+<div id="expenses" class="tab hidden">
+<div class="card"><h2>かんたん支出入力</h2><input id="quick" placeholder="例：今日の昼ご飯850円"><button class="primary" onclick="quickAdd()">文章から追加</button>
+<hr><h2>支出を追加</h2><input id="expName" placeholder="内容（例：スーパー）"><div class="row"><input id="expAmount" type="number" placeholder="金額"><select id="expCat"><option>食費</option><option>住居</option><option>日用品</option><option>交通</option><option>通信</option><option>趣味・娯楽</option><option>買い物</option><option>美容・健康</option><option>交際費</option><option>その他</option></select></div><input id="expDate" type="date"><button class="primary" onclick="addExpense()">支出を保存</button></div>
+</div>
+<div id="goals" class="tab hidden"><div class="card"><h2>貯金目標</h2><input id="goalName" placeholder="目標（例：旅行）"><input id="goalAmount" type="number" placeholder="目標金額"><input id="goalSaved" type="number" placeholder="現在の貯金額"><button class="primary" onclick="addGoal()">目標を追加</button><div id="goalList"></div></div></div>
+<div id="subs" class="tab hidden"><div class="card"><h2>サブスク管理</h2><input id="subName" placeholder="サービス名"><div class="row"><input id="subAmount" type="number" placeholder="月額"><input id="subDay" type="number" min="1" max="31" placeholder="毎月の請求日"></div><button class="primary" onclick="addSub()">登録</button><div id="subList"></div></div></div>
+<div id="challenges" class="tab hidden"><div class="card"><h2>節約チャレンジ</h2><p>今週はコンビニを控える / 外食を1回減らす / サブスクを1つ見直す</p><div id="challengeList"></div></div></div>
+<div id="payments" class="tab hidden"><div class="card"><h2>支払予定</h2><input id="payName" placeholder="支払い内容"><div class="row"><input id="payAmount" type="number" placeholder="金額"><input id="payDate" type="date"></div><button class="primary" onclick="addPayment()">予定を追加</button><div id="payList"></div><p class="muted">※この画面内で予定を管理します。プッシュ通知は未対応です。</p></div></div>
+<div id="settings" class="tab hidden"><div class="card"><h2>月の予算</h2><input id="budget" type="number" placeholder="例：150000"><button class="primary" onclick="saveBudget()">予算を保存</button><p id="saveMsg" class="muted"></p><button onclick="signOut()">ログアウト</button></div></div>
+</section>
+</main>
+<script>
+const SUPABASE_URL = "https://dgjrtvgproytfcpsnnmh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ZBhEb4MIN41Kjf51ePhMyQ_NBXyypBK";
+const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let user=null, data={budget:0,expenses:[],goals:[],subs:[],payments:[],challenges:[false,false,false]};
+const yen=n=>"¥"+Number(n||0).toLocaleString("ja-JP");
+const today=()=>new Date().toISOString().slice(0,10);
+document.getElementById("expDate").value=today();document.getElementById("payDate").value=today();document.getElementById("reportMonth").value=today().slice(0,7);
+function msg(t){document.getElementById("authMsg").textContent=t}
+async function signUp(){const {data:d,error}=await sb.auth.signUp({email:email.value,password:password.value});msg(error?error.message:"登録メールを確認してください。確認後にログインできます。")}
+async function signIn(){const {data:d,error}=await sb.auth.signInWithPassword({email:email.value,password:password.value});if(error){msg(error.message);return}user=d.user;await loadData()}
+async function signOut(){await sb.auth.signOut();user=null;auth.classList.remove("hidden");app.classList.add("hidden")}
+async function loadData(){const {data:r,error}=await sb.from("life_data").select("payload").eq("user_id",user.id).maybeSingle();if(error){msg(error.message);return}if(r?.payload)data={...data,...r.payload};auth.classList.add("hidden");app.classList.remove("hidden");render()}
+async function save(){if(!user)return;const {error}=await sb.from("life_data").upsert({user_id:user.id,payload:data,updated_at:new Date().toISOString()});if(error)alert("保存エラー："+error.message);render()}
+function showTab(id,b){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active")}
+function addExpense(){const name=expName.value.trim(),amount=Number(expAmount.value);if(!name||amount<=0)return alert("内容と金額を入力してね");data.expenses.unshift({id:Date.now(),name,amount,cat:expCat.value,date:expDate.value||today()});expName.value="";expAmount.value="";save()}
+function quickAdd(){const s=quick.value;const m=s.match(/[0-9,]+\\s*円?/);if(!m)return alert("金額が見つからないよ。例：昼ご飯850円");const amount=Number(m[0].replace(/[^0-9]/g,""));let cat="その他";if(/昼|ご飯|食|弁当|スーパー|コンビニ/.test(s))cat="食費";else if(/電車|バス|ガソリン|タクシー/.test(s))cat="交通";else if(/カフェ|コーヒー/.test(s))cat="食費";data.expenses.unshift({id:Date.now(),name:s.replace(m[0],"").trim()||"支出",amount,cat,date:today()});quick.value="";save()}
+function addGoal(){if(!goalName.value||Number(goalAmount.value)<=0)return;data.goals.push({name:goalName.value,amount:+goalAmount.value,saved:+goalSaved.value||0});goalName.value=goalAmount.value=goalSaved.value="";save()}
+function addSub(){if(!subName.value||+subAmount.value<=0)return;data.subs.push({name:subName.value,amount:+subAmount.value,day:+subDay.value||1});subName.value=subAmount.value=subDay.value="";save()}
+function addPayment(){if(!payName.value||+payAmount.value<=0||!payDate.value)return;data.payments.push({name:payName.value,amount:+payAmount.value,date:payDate.value});payName.value=payAmount.value="";save()}
+function saveBudget(){data.budget=+budget.value||0;save();saveMsg.textContent="予算を保存したよ！"}
+function removeItem(key,i){data[key].splice(i,1);save()}
+function renderReport(){
+ const selected=document.getElementById("reportMonth").value||today().slice(0,7);
+ const rows=data.expenses.filter(x=>(x.date||"").startsWith(selected));
+ const total=rows.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+ const prevDate=new Date(Number(selected.slice(0,4)),Number(selected.slice(5,7))-2,1);
+ const prevKey=prevDate.getFullYear()+"-"+String(prevDate.getMonth()+1).padStart(2,"0");
+ const prevRows=data.expenses.filter(x=>(x.date||"").startsWith(prevKey));
+ const prevTotal=prevRows.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+ document.getElementById("reportTotal").textContent=yen(total);
+ document.getElementById("reportCount").textContent=rows.length+"件の支出";
+ const diff=total-prevTotal;
+ document.getElementById("reportDiff").textContent=diff>0?"＋"+yen(diff):diff<0?"−"+yen(-diff):yen(0);
+ document.getElementById("reportDiffText").textContent=prevRows.length?`前月（${prevKey}）より${diff>0?yen(diff)+"増加":diff<0?yen(-diff)+"減少":"変化なし"}だよ。`:"前月の記録がないため、比較できないよ。";
+ const sums={};rows.forEach(x=>{const c=x.cat||"その他";sums[c]=(sums[c]||0)+(Number(x.amount)||0)});
+ const cats=Object.entries(sums).sort((a,b)=>b[1]-a[1]);
+ document.getElementById("reportCategories").innerHTML=cats.length?cats.map(([name,value])=>`<div style="margin:12px 0"><div class="item"><span>${name}</span><b>${yen(value)}（${total?Math.round(value/total*100):0}%）</b></div><div class="bar"><span style="width:${total?value/total*100:0}%"></span></div></div>`).join(""):"この月の支出はまだないよ。";
+ const base=new Date(Number(selected.slice(0,4)),Number(selected.slice(5,7))-1,1);
+ const months=[];for(let i=5;i>=0;i--){const d=new Date(base.getFullYear(),base.getMonth()-i,1);const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");const value=data.expenses.filter(x=>(x.date||"").startsWith(key)).reduce((sum,x)=>sum+(Number(x.amount)||0),0);months.push({key,label:(d.getMonth()+1)+"月",value})}
+ const max=Math.max(1,...months.map(x=>x.value));
+ document.getElementById("reportTrend").innerHTML=months.map(x=>`<div style="display:grid;grid-template-columns:42px 1fr 95px;gap:8px;align-items:center;margin:10px 0"><span class="muted">${x.label}</span><div class="bar"><span style="width:${x.value/max*100}%"></span></div><b style="font-size:12px;text-align:right">${yen(x.value)}</b></div>`).join("");
+}
+function render(){const month=today().slice(0,7),ex=data.expenses.filter(x=>(x.date||"").startsWith(month)),total=ex.reduce((s,x)=>s+x.amount,0);document.getElementById("total").textContent=yen(total);document.getElementById("budgetText").textContent=data.budget?`予算 ${yen(data.budget)} / 残り ${yen(data.budget-total)}`:"予算未設定";document.getElementById("budgetBar").style.width=data.budget?Math.min(100,total/data.budget*100)+"%":"0%";budget.value=data.budget||"";
+const sums={};ex.forEach(x=>sums[x.cat]=(sums[x.cat]||0)+x.amount);categories.innerHTML=Object.entries(sums).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="item"><span>${k}</span><b>${yen(v)}</b></div>`).join("")||"まだ支出がないよ";
+recent.innerHTML=data.expenses.slice(0,8).map((x,i)=>`<div class="item"><span>${x.name}<br><small class="muted">${x.date}・${x.cat}</small></span><b>${yen(x.amount)}</b></div>`).join("")||"支出を追加してね";
+advice.textContent=total===0?"まずは支出を1件記録してみよう。":data.budget&&total>data.budget*.8?"予算の80%を超えているよ。外食やコンビニの回数を見直してみよう。":`今月は${yen(total)}使っているよ。大きな支出から見直すと節約しやすいよ。`;
+goalList.innerHTML=data.goals.map((x,i)=>`<div class="item"><span>${x.name}<br><small>${yen(x.saved)} / ${yen(x.amount)}</small></span><button onclick="removeItem('goals',${i})">削除</button></div>`).join("");
+subList.innerHTML=data.subs.map((x,i)=>`<div class="item"><span>${x.name}・${yen(x.amount)}/月<br><small>毎月${x.day}日</small></span><button onclick="removeItem('subs',${i})">削除</button></div>`).join("");
+payList.innerHTML=data.payments.map((x,i)=>`<div class="item"><span>${x.name}<br><small>${x.date}</small></span><b>${yen(x.amount)}</b><button onclick="removeItem('payments',${i})">削除</button></div>`).join("");
+challengeList.innerHTML=["今週はコンビニを控える","外食を1回減らす","使っていないサブスクを見直す"].map((x,i)=>`<label class="item"><span>${x}</span><input type="checkbox" style="width:auto" ${data.challenges[i]?"checked":""} onchange="data.challenges[${i}]=this.checked;save()"></label>`).join("");  renderReport();
+}
+sb.auth.getSession().then(({data:d})=>{if(d.session){user=d.session.user;loadData()}});
+</script></body></html>
