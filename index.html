@@ -486,10 +486,17 @@ function renderAnnual(){
  $("annualCount").textContent=rows.length+"件の支出";
  $("annualAverage").textContent=yen(Math.round(total/12));
 
- $("annualMonths").innerHTML=monthly.map((amount,i)=>
-  `<div class="item"><span>${i+1}月</span><b>${yen(amount)}</b></div>`
- ).join("");
+ const maxValue=Math.max(...monthly,1);
 
+$("annualMonths").innerHTML=monthly.map((amount,i)=>`
+ <div class="item" style="display:flex;align-items:center;gap:10px">
+  <span style="width:35px">${i+1}月</span>
+  <div style="flex:1;background:#eee;border-radius:10px;height:16px;overflow:hidden">
+   <div style="width:${amount/maxValue*100}%;background:linear-gradient(90deg,#6c63ff,#ff65a3);height:100%;border-radius:10px"></div>
+  </div>
+  <b>${yen(amount)}</b>
+ </div>
+`).join("");
  const ranking=Object.entries(categories).sort((a,b)=>b[1]-a[1]);
  $("annualCategories").innerHTML=ranking.length
   ?ranking.map(([name,amount],i)=>
