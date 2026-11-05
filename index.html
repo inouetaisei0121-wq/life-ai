@@ -120,6 +120,12 @@ button.primary{font-weight:700}
 </div>
 
 <div id="annual" class="tab hidden">
+ <div id="annualLocked" class="card hidden">
+  <h2>🔒 プレミアム限定</h2>
+  <p>年間支出分析はプレミアム会員限定です。</p>
+  <p>月額300円で利用できます！</p>
+  <button onclick="document.getElementById('premiumStatus').scrollIntoView({behavior:'smooth'})">プレミアムを見る</button>
+</div>
 <div class="card">
 <h2>📊 年間支出分析</h2>
 <p class="muted">1年間のお金の使い方をチェックしよう！</p>
@@ -322,18 +328,24 @@ async function save(){
  render();
 }
 function showTab(id,b){
- if(id==="annual" && !isPremium){
-  alert("年間分析はプレミアム会員限定です。月額300円で利用できます。画面下のプレミアムから登録できます！");
-  return;
- }
  document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));
  $(id).classList.remove("hidden");
  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
  b.classList.add("active");
- if(id==="annual")renderAnnual();
+
+ if(id==="annual"){
+  const annualContent=document.querySelectorAll("#annual > :not(#annualLocked)");
+  if(isPremium){
+   $("annualLocked").classList.add("hidden");
+   annualContent.forEach(x=>x.classList.remove("hidden"));
+   renderAnnual();
+  }else{
+   $("annualLocked").classList.remove("hidden");
+   annualContent.forEach(x=>x.classList.add("hidden"));
+  }
+ }
  if(id==="report")renderReport();
 }
- 
 function addExpense(){
  const name=$("expName").value.trim();
  const amount=Number($("expAmount").value);
