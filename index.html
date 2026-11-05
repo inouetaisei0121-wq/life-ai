@@ -118,7 +118,11 @@ button.primary{font-weight:700}
 <div id="reportTrend"></div>
 </div>
 </div>
-
+<div class="card">
+ <h2>💡 節約アドバイス</h2>
+ <div id="savingAdvice"></div>
+</div>
+ 
 <div id="annual" class="tab hidden">
  <div id="annualLocked" class="card hidden">
   <h2>🔒 プレミアム限定</h2>
@@ -488,6 +492,17 @@ function renderReport(){
   <b style="font-size:12px;text-align:right">${yen(x.value)}</b>
   </div>`
  ).join("");
+ if (!isPremium) {
+ $("savingAdvice").textContent =
+  "🔒 節約アドバイス強化はプレミアム会員限定です。月額300円で利用できます！";
+} else {
+ const advice = cats.length
+  ? "一番支出が多いカテゴリは「" + cats[0][0] +
+    "」だよ。まずはこのカテゴリの支出を見直してみよう！"
+  : "支出を記録すると、節約アドバイスが表示されるよ。";
+
+ $("savingAdvice").textContent = advice;
+}
 }
 
 function renderAnnual(){
