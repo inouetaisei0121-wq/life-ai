@@ -588,11 +588,11 @@ sb.auth.getSession().then(({data:d})=>{
   }
 
   const active = sub &&
-   isPremium = !!active;
     ["active", "trialing"].includes(sub.status) &&
     (!sub.current_period_end ||
       new Date(sub.current_period_end) > new Date());
 
+ isPremium = !!active;
   if (active) {
     $("premiumStatus").textContent = "✨ プレミアム会員です";
     $("premiumButton").textContent = "プレミアム会員";
