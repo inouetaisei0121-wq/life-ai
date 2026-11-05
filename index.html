@@ -388,6 +388,11 @@ function quickAdd(){
 }
 
 function addGoal(){
+ if(!isPremium && data.goals.length>=1){
+  alert("無料会員は貯金目標を1つまで登録できます。プレミアム会員なら複数登録できます！");
+  return;
+ }
+
  if(!$("goalName").value||Number($("goalAmount").value)<=0)return;
  data.goals.push({
   name:$("goalName").value,
