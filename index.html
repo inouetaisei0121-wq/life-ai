@@ -241,6 +241,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_ZBhEb4MIN41Kjf51ePhMyQ_NBXyypBK";
 const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 let user = null;
+ let isPremium = false;
 let data = {
  budget:0,
  expenses:[],
@@ -320,8 +321,11 @@ async function save(){
  if(error)alert("保存エラー："+error.message);
  render();
 }
-
 function showTab(id,b){
+ if(id==="annual" && !isPremium){
+  alert("年間分析はプレミアム会員限定です。月額300円で利用できます。画面下のプレミアムから登録できます！");
+  return;
+ }
  document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));
  $(id).classList.remove("hidden");
  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
@@ -329,7 +333,7 @@ function showTab(id,b){
  if(id==="annual")renderAnnual();
  if(id==="report")renderReport();
 }
-
+ 
 function addExpense(){
  const name=$("expName").value.trim();
  const amount=Number($("expAmount").value);
@@ -584,6 +588,7 @@ sb.auth.getSession().then(({data:d})=>{
   }
 
   const active = sub &&
+   isPremium = !!active;
     ["active", "trialing"].includes(sub.status) &&
     (!sub.current_period_end ||
       new Date(sub.current_period_end) > new Date());
