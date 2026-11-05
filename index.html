@@ -228,7 +228,8 @@ button.primary{font-weight:700}
 <p>・AI節約アドバイス強化</p>
 <p>・年間収支分析</p>
 <p>・貯金目標の管理</p>
-<button onclick="startPremium()">プレミアムを始める</button>
+ <p id="premiumStatus">会員状態を確認中...</p>
+<button id="premiumButton" onclick="startPremium()">プレミアムを始める</button>
 <p class="muted" style="color:white">※決済機能は準備中です。</p>
 </div>
 </section>
@@ -306,6 +307,7 @@ async function loadData(){
  $("auth").classList.add("hidden");
  $("app").classList.remove("hidden");
  render();
+  await checkPremium();
 }
 
 async function save(){
@@ -567,6 +569,35 @@ sb.auth.getSession().then(({data:d})=>{
   loadData();
  }
 });
+ async function checkPremium() {
+  if (!user) return;
+
+  const { data: sub, error } = await sb
+    .from("subscriptions")
+    .select("status,current_period_end")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    $("premiumStatus").textContent = "会員状態を確認できませんでした";
+    return;
+  }
+
+  const active = sub &&
+    ["active", "trialing"].includes(sub.status) &&
+    (!sub.current_period_end ||
+      new Date(sub.current_period_end) > new Date());
+
+  if (active) {
+    $("premiumStatus").textContent = "✨ プレミアム会員です";
+    $("premiumButton").textContent = "プレミアム会員";
+    $("premiumButton").disabled = true;
+  } else {
+    $("premiumStatus").textContent = "現在は無料プランです";
+    $("premiumButton").textContent = "プレミアムを始める";
+    $("premiumButton").disabled = false;
+  }
+}
 async function startPremium() {
   if (!user) {
     alert("先にログインしてね！");
