@@ -492,16 +492,32 @@ function renderReport(){
   <b style="font-size:12px;text-align:right">${yen(x.value)}</b>
   </div>`
  ).join("");
- if (!isPremium) {
+if (!isPremium) {
  $("savingAdvice").textContent =
   "🔒 節約アドバイス強化はプレミアム会員限定です。月額300円で利用できます！";
 } else {
- const advice = cats.length
-  ? "一番支出が多いカテゴリは「" + cats[0][0] +
-    "」だよ。まずはこのカテゴリの支出を見直してみよう！"
-  : "支出を記録すると、節約アドバイスが表示されるよ。";
+ const adviceMap = {
+  "食費":"外食やコンビニの回数を見直して、自炊を増やしてみよう！",
+  "住居":"家賃や電気・ガスなどの固定費を確認してみよう！",
+  "日用品":"まとめ買いやストックの買いすぎを見直そう！",
+  "交通":"移動ルートや交通手段を見直してみよう！",
+  "通信":"スマホ料金や契約プランを確認してみよう！",
+  "趣味娯楽":"毎月の趣味・娯楽費に予算を決めてみよう！",
+  "買い物":"買う前に本当に必要か一度考えてみよう！",
+  "美容":"定期購入や利用頻度を見直してみよう！",
+  "交際費":"飲み会や外食に月の予算を決めてみよう！"
+ };
 
- $("savingAdvice").textContent = advice;
+ const top3 = cats.slice(0,3);
+
+ $("savingAdvice").innerHTML = top3.length
+  ? top3.map(([name,value],i) =>
+    `<div class="item">
+      <b>${i+1}位：${name}（${yen(value)}）</b>
+      <p>${adviceMap[name] || "このカテゴリの支出を確認して、無理のない範囲で見直してみよう！"}</p>
+    </div>`
+   ).join("")
+  : "支出を記録すると、節約アドバイスが表示されるよ。";
 }
 }
 
