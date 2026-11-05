@@ -228,7 +228,7 @@ button.primary{font-weight:700}
 <p>・AI節約アドバイス強化</p>
 <p>・年間収支分析</p>
 <p>・貯金目標の管理</p>
-<button onclick="alert('プレミアムプランは準備中です！')">プレミアムを始める</button>
+<button onclick="startPremium()">プレミアムを始める</button>
 <p class="muted" style="color:white">※決済機能は準備中です。</p>
 </div>
 </section>
@@ -567,6 +567,45 @@ sb.auth.getSession().then(({data:d})=>{
   loadData();
  }
 });
-</script>
+async function startPremium() {
+  if (!user) {
+    alert("先にログインしてね！");
+    return;
+  }
+
+  try {
+    const { data: sessionData } = await sb.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken) {
+      alert("ログインし直してね！");
+      return;
+    }
+
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/create-checkout-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + accessToken,
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.url) {
+      throw new Error(result.message || result.error || "決済画面を開けませんでした");
+    }
+
+    location.href = result.url;
+
+  } catch (error) {
+    alert("エラー：" + error.message);
+  }
+}</script>
 </body>
 </html>
