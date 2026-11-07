@@ -641,15 +641,18 @@ sb.auth.getSession().then(({data:d})=>{
     (!sub.current_period_end ||
       new Date(sub.current_period_end) > new Date());
 
- isPremium = !!active;
+  isPremium = !!active;
+
   if (active) {
     $("premiumStatus").textContent = "✨ プレミアム会員です";
     $("premiumButton").textContent = "プレミアム会員";
     $("premiumButton").disabled = true;
+    $("portalButton").style.display = "block";
   } else {
     $("premiumStatus").textContent = "現在は無料プランです";
     $("premiumButton").textContent = "プレミアムを始める";
     $("premiumButton").disabled = false;
+    $("portalButton").style.display = "none";
   }
 }
 async function startPremium() {
